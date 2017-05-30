@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # encoding: utf-8
-from itertools import chain
+from math import ceil
 
 
 class Estimator(object):
@@ -14,7 +14,7 @@ class Estimator(object):
                           if items}
         additional = sum(min(splitted_costs[set_idx] for set_idx in sets)
                          for item, sets in state.item2sets.iteritems())
-        return state.current_cost + additional
+        return ceil(state.current_cost + additional)
 
     def cost_of_chosen_list(self, chosen_sets):
         return sum(self.set_costs[s_idx] for s_idx in chosen_sets)
@@ -23,13 +23,10 @@ class Estimator(object):
         return self.set_costs[set_idx]
 
     def get_perspective_set(self, state):
-        min_cover = min(map(len, state.item2sets.itervalues()))
-
-        sets = set(chain.from_iterable(sets
-                                       for sets in state.item2sets.itervalues()
-                                       if len(sets) == min_cover))
-
-        return min(sets, key=lambda set_idx: self.set_costs[set_idx] / len(state.set2items[set_idx]))
+        item_weights = {idx: 1.0 / len(sets)
+                        for idx, sets in state.item2sets.iteritems()}
+        return max(state.set2items.iteritems(),
+                   key=lambda (s, items): sum(item_weights[i] for i in items))[0]
 
     def cheapest_set(self, sets):
         return min(sets, key=lambda set_idx: self.set_costs[set_idx])
