@@ -18,4 +18,5 @@ def print_durations(solver=bruteforce_solver, min_task_size=0, max_task_size=20)
 
 
 if __name__ == '__main__':
-    print_durations()  # Put your solver and your size bounds here
+    from cp_solver import deep_search
+    print_durations(lambda(task): deep_search(task).best_solution, max_task_size=50)  # Put your solver and your size bounds here

@@ -97,8 +97,6 @@ class State(object):
         self.chosen_sets.update(required_sets)
         self.on_sets_chosen(required_sets)
 
-        self.remove_redundant_items()
-
     def detect_required_sets(self):
         required_sets = set()
         for item, sets in self.item2sets.iteritems():
@@ -106,27 +104,16 @@ class State(object):
                 required_sets.update(sets)
         return required_sets
 
-    def remove_redundant_items(self):
-        # Items covered by exactly the same list of sets are symmetric. So, we have to toss out some of them.
-        redundant = self.find_redundant_items()
-        self.on_items_covered(redundant)  # actually they are not covered,
-        # but they will be, with their symmetric brothers
-
     def on_items_covered(self, to_remove):
         overvalued_sets = set()
         for item in to_remove:
             overvalued_sets.update(self.item2sets.pop(item))
 
-        counter = defaultdict(list)
         for s in overvalued_sets & set(self.set2items):
             items = self.set2items[s]
             items -= to_remove
-            if items:
-                counter[tuple(sorted(items))].append(s)
-            else:
+            if not items:
                 del self.set2items[s]
-
-        #self.remove_redundant_sets(counter)  # Too long execution, and possible has no sense, because of child generation based on the same metric
 
     def on_sets_chosen(self, sets):
         covered_items = set()
@@ -134,36 +121,6 @@ class State(object):
             covered_items.update(self.set2items.pop(s))
 
         self.on_items_covered(covered_items)
-
-    def find_redundant_sets(self, counter):
-        redundant_sets = set()
-        overcovered_items = set()
-        for items, sets in counter.iteritems():
-            if len(sets) > 1:
-                overcovered_items.update(items)
-                redundant_sets.update(sets)  # leave the cheapest one
-                redundant_sets.remove(self.estimator.cheapest_set(sets))
-        return redundant_sets, overcovered_items
-
-    def remove_redundant_sets(self, counter):
-        sets, items = self.find_redundant_sets(counter)
-
-        for set_idx in sets:
-           del self.set2items[set_idx]
-
-        for item_idx in items:
-            self.item2sets[item_idx] -= sets
-
-    def find_redundant_items(self):
-        counter = defaultdict(list)  # TODO: Can we reuse this counter for child choosing?
-        for item, sets in self.item2sets.iteritems():
-            counter[tuple(sorted(sets))].append(item)
-
-        redundant = set()
-        for items in counter.itervalues():
-            if len(items) > 1:
-                redundant.update(items[1:])  # just leave one
-        return redundant
 
     # Getting info
 

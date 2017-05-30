@@ -5,11 +5,11 @@ from itertools import chain
 
 class Estimator(object):
     def __init__(self, task):
-        self.set_costs = {s.index: s.cost for s in task.sets}
+        self.set_costs = {s.index: float(s.cost) for s in task.sets}
 
     def get_optimistic(self, state):
         # split every set on the not covered items and choose the cheapest one for every item
-        splitted_costs = {set_idx: float(self.set_costs[set_idx]) / len(items)
+        splitted_costs = {set_idx: self.set_costs[set_idx] / len(items)
                           for set_idx, items in state.set2items.iteritems()
                           if items}
         additional = sum(min(splitted_costs[set_idx] for set_idx in sets)
@@ -29,7 +29,7 @@ class Estimator(object):
                                        for sets in state.item2sets.itervalues()
                                        if len(sets) == min_cover))
 
-        return min(sets, key=lambda set_idx: float(self.set_costs[set_idx]) / len(state.set2items[set_idx]))
+        return min(sets, key=lambda set_idx: self.set_costs[set_idx] / len(state.set2items[set_idx]))
 
     def cheapest_set(self, sets):
         return min(sets, key=lambda set_idx: self.set_costs[set_idx])

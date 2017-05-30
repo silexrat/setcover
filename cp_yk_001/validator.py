@@ -76,4 +76,5 @@ def check_solver(solver, inputs=list_files(max_size=20)):
 
 
 if __name__ == '__main__':
-    check_solver(bruteforce_solver)  # put your solver here
+    from cp_solver import deep_search
+    check_solver(lambda (task): deep_search(task).best_solution)  # put your solver here
