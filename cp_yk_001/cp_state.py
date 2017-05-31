@@ -9,12 +9,12 @@ class State(object):
     def __init__(self, estimator, set2items, item2sets,
                  parent=None, picked_set=None, decision=None):
         # Don't use this constructor directly. Use .from_task() instead
-        self.estimator = estimator  # just copy pointer from the parent
-        self.set2items = set2items  # only for not chosen sets and not covered items
-        self.item2sets = item2sets  # only for not covered items and not chosen sets
-        self.parent = parent        # parent state
-        self.picked_set = picked_set
-        self.decision = decision  # Whether we build picked_set or not
+        self.estimator = estimator  # just copy the pointer from the parent for fast access
+        self.set2items = set2items  # {set_index: set(indexes of not covered items)}
+        self.item2sets = item2sets  # {item_index: set(indexes of sets that can cover the item and have no decision yet)}
+        self.parent = parent        # parent state object
+        self.picked_set = picked_set  # picked set index
+        self.decision = decision    # whether we build picked_set or not
         self.is_feasible = True
         if decision:
             self.chosen_sets = {picked_set}
@@ -50,12 +50,12 @@ class State(object):
     # Search
 
     def next_child(self):
-        picked_set = self.estimator.get_perspective_set(self)
+        picked_set = self.estimator.pick_a_set(self)
         return self.create_child(picked_set, decision=True)
 
     def create_child(self, picked_set, decision):
-        set2items = {s: i.copy() for s, i in self.set2items.iteritems()}  # TODO: can we avoid this expensive copy?
-        item2sets = {i: s.copy() for i, s in self.item2sets.iteritems()}
+        set2items = {s: i.copy() for s, i in self.set2items.iteritems()}  # Copy for mutating in child state
+        item2sets = {i: s.copy() for i, s in self.item2sets.iteritems()}  # TODO: Copy is expensive. Can we avoid it?
         return self.__class__(self.estimator, set2items, item2sets,
                               parent=self, picked_set=picked_set, decision=decision)
 
@@ -79,16 +79,17 @@ class State(object):
             self.propagate_on_toss()
 
     def propagate_on_choice(self):
-        self.on_sets_chosen(self.chosen_sets)
+        self.on_sets_chosen(self.chosen_sets)  # there is only one set in chosen_sets (picked_set)
 
     def propagate_on_toss(self):
-        if self.picked_set is not None:
-            orphan_items = self.set2items.pop(self.picked_set)
-            for item_idx in orphan_items:
+        if self.picked_set is not None:  # "if we are not at the init state"
+            orphaned_items = self.set2items.pop(self.picked_set)
+            for item_idx in orphaned_items:
                 sets = self.item2sets[item_idx]
                 sets.remove(self.picked_set)
                 if not sets:
                     self.is_feasible = False
+                    # We can't cover the item.
                     # No matter, what else. State doesn't lead to any feasible solutions
                     return
 
@@ -100,7 +101,7 @@ class State(object):
     def detect_required_sets(self):
         required_sets = set()
         for item, sets in self.item2sets.iteritems():
-            if len(sets) == 1:
+            if len(sets) == 1:  # only one set can cover this item
                 required_sets.update(sets)
         return required_sets
 
@@ -123,9 +124,6 @@ class State(object):
         self.on_items_covered(covered_items)
 
     # Getting info
-
-    def iter_chosen_sets(self):
-        return self.chosen_sets
 
     def is_all_covered(self):
         return not self.item2sets

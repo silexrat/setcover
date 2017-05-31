@@ -1,12 +1,9 @@
 #!/usr/bin/env python
 # encoding: utf-8
 import sys
+from time import time as now
 
 from cp_state import State
-
-# Python has no tail-recursion optimization.
-# Even more, python has a limit on recursion depth
-# So, we need to write big loops iteratively
 
 
 class Solution(object):
@@ -23,7 +20,7 @@ class Solution(object):
             solution = [0] * self.set_count
             state_on_stack = state
             while state_on_stack:
-                for s in state_on_stack.iter_chosen_sets():
+                for s in state_on_stack.chosen_sets:
                     solution[s] = 1
                 state_on_stack = state_on_stack.parent
 
@@ -35,10 +32,16 @@ class Solution(object):
             self.best_cost, self.proven_as_optimal, self.steps, self.best_solution)
 
 
-def deep_search(task):
+def deep_search(task, timeout=10*60):
     state = State.from_task(task)
     solution = Solution(task)
-    while state:
+    deadline = now() + timeout
+
+    # Python has no tail-recursion optimization.
+    # Even more, python has a limit on recursion depth
+    # So, we need to write big loops iteratively
+
+    while state:  # when we try to .negate() init state we will obtain None and will exit from the loop
         solution.steps += 1
         if not state.is_feasible:
             state = state.parent
@@ -46,22 +49,25 @@ def deep_search(task):
 
         if state.is_all_covered():
             solution.store_result(state)
-            state = state.negate()
+            state = state.negate()  # try not to choose the current set or rollback to the parent state
             continue
 
         if state.get_optimistic_cost() >= solution.best_cost:
-            state = state.negate()
+            if now() > deadline:  # we get to this place often enough to stop in time,
+                                  # and we get to it not on the each iteration, so we will not check the time too frequently
+                return solution
+            state = state.negate()  # try not to choose the current set or rollback to the parent state
             continue
 
         state = state.next_child()
 
-    solution.proven_as_optimal = True
+    solution.proven_as_optimal = True  # we have not terminated on timeout, so we have explored all the tree
     return solution
 
 
 if __name__ == '__main__':
     from reader import read_input
-    task = read_input('sc_27_0')
-    print deep_search(task)
+    task = read_input('sc_81_0')
+    print deep_search(task, timeout=60)
     # from profile import run
     # run('deep_search(task)', sort=2)  # sort - 2 cumtime, 1 - totime

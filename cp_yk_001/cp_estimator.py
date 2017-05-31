@@ -22,11 +22,9 @@ class Estimator(object):
     def cost_of_chosen(self, set_idx):
         return self.set_costs[set_idx]
 
-    def get_perspective_set(self, state):
-        item_weights = {idx: 1.0 / len(sets)
+    def pick_a_set(self, state):
+        # Pick a set, basing on covering and the cost
+        item_weights = {idx: 1.0 / len(sets)  # The lesser candidates has item, the more critical item is
                         for idx, sets in state.item2sets.iteritems()}
         return max(state.set2items.iteritems(),
-                   key=lambda (s, items): sum(item_weights[i] for i in items))[0]
-
-    def cheapest_set(self, sets):
-        return min(sets, key=lambda set_idx: self.set_costs[set_idx])
+                   key=lambda (s_idx, items): sum(item_weights[i] for i in items) / self.set_costs[s_idx])[0]
