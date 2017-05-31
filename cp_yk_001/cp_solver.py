@@ -16,7 +16,7 @@ class Solution(object):
 
     def store_result(self, state):
         if state.current_cost < self.best_cost:
-            #print self.steps, 'update solution to', state.current_cost
+            # print self.steps, 'update solution to', state.current_cost  # uncomment this to see the progress
             solution = [0] * self.set_count
             state_on_stack = state
             while state_on_stack:
@@ -49,14 +49,14 @@ def deep_search(task, timeout=10*60):
 
         if state.is_all_covered():
             solution.store_result(state)
-            state = state.negate()  # try not to choose the current set or rollback to the parent state
+            state = state.negate()  # try to deselect the current set or rollback to the parent state
             continue
 
         if state.get_optimistic_cost() >= solution.best_cost:
             if now() > deadline:  # we get to this place often enough to stop in time,
                                   # and we get to it not on the each iteration, so we will not check the time too frequently
                 return solution
-            state = state.negate()  # try not to choose the current set or rollback to the parent state
+            state = state.negate()  # try to deselect the current set or rollback to the parent state
             continue
 
         state = state.next_child()

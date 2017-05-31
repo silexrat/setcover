@@ -1,5 +1,16 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
+"""
+The MIT License (MIT)
+Copyright (c) 2017 Yuri Kovalev
+
+This CP solver can find the optimal solution on small datasets (until sc_45_0)
+For greater datasets there is a timeout option. After timeout it stops searching and submits best found solution.
+In practice, the solver only takes a few minutes to get 7/10 scores for all tasks in the assignment.
+Further search is not so productive and does not improve solutions significantly.
+"""
+
 import sys
 from reader import parse_input
 from cp_solver import deep_search
