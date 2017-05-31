@@ -15,9 +15,11 @@ class Solution(object):
         self.best_solution = None
         self.set_count = task.set_count
         self.proven_as_optimal = False
+        self.steps = 0
 
     def store_result(self, state):
         if state.current_cost < self.best_cost:
+            #print self.steps, 'update solution to', state.current_cost
             solution = [0] * self.set_count
             state_on_stack = state
             while state_on_stack:
@@ -29,14 +31,15 @@ class Solution(object):
             self.best_cost = state.current_cost
 
     def __repr__(self):
-        return 'Solution(cost={}, optimal={}, sets={})'.format(
-            self.best_cost, self.proven_as_optimal, self.best_solution)
+        return 'Solution(cost={}, optimal={}, steps={}, sets={})'.format(
+            self.best_cost, self.proven_as_optimal, self.steps, self.best_solution)
 
 
 def deep_search(task):
     state = State.from_task(task)
     solution = Solution(task)
     while state:
+        solution.steps += 1
         if not state.is_feasible:
             state = state.parent
             continue
@@ -60,3 +63,5 @@ if __name__ == '__main__':
     from reader import read_input
     task = read_input('sc_27_0')
     print deep_search(task)
+    # from profile import run
+    # run('deep_search(task)', sort=2)  # sort - 2 cumtime, 1 - totime
