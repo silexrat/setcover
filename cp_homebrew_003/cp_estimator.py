@@ -6,6 +6,7 @@ from math import ceil
 class Estimator(object):
     def __init__(self, task):
         self.set_costs = {s.index: float(s.cost) for s in task.sets}
+        self.metrics = {'cut_exp': 0, 'not_cut_exp': 0, 'rollback_exp': 0}
 
     def get_optimistic(self, state):
         # split every set on the not covered items and choose the cheapest one for every item

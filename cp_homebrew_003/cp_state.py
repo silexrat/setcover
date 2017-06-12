@@ -21,7 +21,8 @@ class State(object):
         else:
             self.chosen_sets = set()
         self.propagate_constaints()
-        self.recalc_cost()
+        if self.is_feasible:
+            self.recalc_cost()
 
     def recalc_cost(self):
         additional = self.estimator.cost_of_chosen_list(self.chosen_sets)
@@ -93,6 +94,18 @@ class State(object):
                     # No matter, what else. State doesn't lead to any feasible solutions
                     return
 
+            # before = len(self.set2items)
+            # self.remove_expensive_subsets(orphaned_items,  # Too expensive calculations :o(
+            #                               self.estimator.cost_of_chosen(self.picked_set))
+            # after = len(self.set2items)
+            # if after != before:
+            #     self.estimator.metrics['cut_exp'] += 1
+            # else:
+            #     self.estimator.metrics['not_cut_exp'] += 1
+            # if not self.is_feasible:
+            #     self.estimator.metrics['rollback_exp'] += 1
+            #     return
+
         # Immediately set 1 for every set that can't be replaced with another set
         required_sets = self.detect_required_sets()
         self.chosen_sets.update(required_sets)
@@ -116,6 +129,33 @@ class State(object):
             if not items:
                 del self.set2items[s]
 
+        #before = len(self.set2items)
+        #self.remove_redundant_sets(overvalued_sets & set(self.set2items))  # expensive operation. Work good only on the large datasets
+        #after = len(self.set2items)
+        #if after < before:
+        #    print 'profit {}->{}'.format(before, after)
+
+    def remove_expensive_subsets(self, items, cost_limit):
+        # We can cover items with the cost=cost_limit
+        # But we don't do that. So, we don't want to cover the items with the more expensive sets
+        costs = self.estimator.set_costs
+
+        iter_items = iter(items)
+        candidates = list(self.item2sets[next(iter_items)])
+
+        for cand_idx in candidates:
+            if costs[cand_idx] >= cost_limit:
+                cand_items = self.set2items[cand_idx]
+                if len(cand_items) <= len(items) and cand_items <= items:
+                    del self.set2items[cand_idx]
+
+                    for item_idx in cand_items:
+                        sets = self.item2sets[item_idx]
+                        sets.remove(cand_idx)
+                        if not sets:
+                            self.is_feasible = False
+                            return  # We cant cover the item
+
     def on_sets_chosen(self, sets):
         covered_items = set()
         for s in sets:
@@ -131,3 +171,11 @@ class State(object):
     def get_optimistic_cost(self):
         return self.estimator.get_optimistic(self)
 
+
+if __name__ == '__main__':
+    from reader import read_input
+    from time import time as now
+    state = State.from_task(read_input('sc_15_0'))
+    # st = now()
+    # state.remove_redundant_sets()
+    # print now() - st

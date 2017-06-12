@@ -16,7 +16,7 @@ class Solution(object):
 
     def store_result(self, state):
         if state.current_cost < self.best_cost:
-            # print self.steps, 'update solution to', state.current_cost  # uncomment this to see the progress
+            print self.steps, 'update solution to', state.current_cost  # uncomment this to see the progress
             solution = [0] * self.set_count
             state_on_stack = state
             while state_on_stack:
@@ -35,6 +35,7 @@ class Solution(object):
 def deep_search(task, timeout=10*60):
     state = State.from_task(task)
     solution = Solution(task)
+    solution.metrics = state.estimator.metrics
     deadline = now() + timeout
 
     # Python has no tail-recursion optimization.
@@ -67,7 +68,10 @@ def deep_search(task, timeout=10*60):
 
 if __name__ == '__main__':
     from reader import read_input
-    task = read_input('sc_81_0')
-    print deep_search(task, timeout=60)
-    # from profile import run
-    # run('deep_search(task)', sort=2)  # sort - 2 cumtime, 1 - totime
+    for fn in ['sc_157_0', 'sc_330_0', 'sc_1000_11', 'sc_5000_1', 'sc_10000_5', 'sc_10000_2']:
+        print '=== {} ==='.format(fn)
+        task = read_input('sc_45_0')
+        solution = deep_search(task, timeout=0.5*60)
+        print solution, solution.metrics
+    #from profile import run
+    #run('deep_search(task, timeout=120)', sort=2)  # sort - 2 cumtime, 1 - totime

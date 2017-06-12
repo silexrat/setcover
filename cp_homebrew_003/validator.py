@@ -78,3 +78,4 @@ def check_solver(solver, inputs=list_files(max_size=20)):
 if __name__ == '__main__':
     from cp_solver import deep_search
     check_solver(lambda (task): deep_search(task).best_solution)  # put your solver here
+    # check_solver(lambda (task): deep_search(task).best_solution, list_files(min_size=30, max_size=50))  # put your solver here
